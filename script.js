@@ -1,14 +1,39 @@
-function extractAndSpellCheckText() {
+// Initialize Typo.js dictionary
+let dictionary;
+fetch('en_US.dic').then((response) => response.text()).then((dicData) => {
+    fetch('en_US.aff').then((response) => response.text()).then((affData) => {
+        dictionary = new Typo("en_US", affData, dicData, { platform: "any" });
+    });
+});
+
+function displayImage() {
+    const imageInput = document.getElementById("imageInput");
+    const imageCanvas = document.getElementById("imageCanvas");
+    const ctx = imageCanvas.getContext("2d");
+
+    if (imageInput.files && imageInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const img = new Image();
+            img.onload = function () {
+                imageCanvas.width = img.width;
+                imageCanvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(imageInput.files[0]);
+    }
+}
+
+function extractAndCheckText() {
     const imageCanvas = document.getElementById("imageCanvas");
     const extractedTextElement = document.getElementById("extractedText");
 
     if (imageCanvas) {
-        extractedTextElement.textContent = "Extracting text and checking spelling. Please wait...";
+        extractedTextElement.textContent = "Extracting text, checking spelling, and checking grammar. Please wait...";
 
-        // Use Tesseract.js to recognize text from the canvas
-        Tesseract.recognize(imageCanvas, 'eng', {
-            logger: (m) => console.log(m)
-        })
+        Tesseract.recognize(imageCanvas, 'eng', { logger: (m) => console.log(m) })
         .then(({ data: { text, words } }) => {
             extractedTextElement.textContent = text || "No text found in the image.";
 
@@ -20,42 +45,30 @@ function extractAndSpellCheckText() {
 
                 let correctedText = text;
 
-                // Split text into words and punctuation, e.g., ["Hello", ",", "world", "!"]
-                const tokens = text.match(/\b\w+\b|[.,!?;:]/g);
+                // Spell-check and correct each word
+                words.forEach((word) => {
+                    // Remove punctuation before spell-checking
+                    const cleanWordText = word.text.replace(/[.,!?;:]$/, '');
+                    const isCorrect = dictionary.check(cleanWordText);
+                    
+                    if (!isCorrect) {
+                        const suggestions = dictionary.suggest(cleanWordText);
+                        const correctedWord = suggestions[0] || cleanWordText;
 
-                // Loop through each token and spell-check
-                tokens.forEach((token) => {
-                    // Check only word tokens for spelling errors
-                    if (/\b\w+\b/.test(token)) {
-                        const isCorrect = dictionary.check(token);
+                        // Replace the word in the original text while keeping original punctuation
+                        correctedText = correctedText.replace(word.text, correctedWord + word.text.slice(cleanWordText.length));
 
-                        if (!isCorrect) {
-                            const suggestions = dictionary.suggest(token);
-                            const correctedWord = suggestions[0] || token;
-
-                            // Replace word in correctedText while preserving punctuation
-                            correctedText = correctedText.replace(token, correctedWord);
-
-                            // Find the word's bounding box in Tesseract's data
-                            const wordData = words.find((word) => word.text === token);
-                            if (wordData) {
-                                const bbox = wordData.bbox;
-                                if (bbox) {
-                                    // Draw the bounding box around the incorrect word
-                                    ctx.strokeStyle = "red";
-                                    ctx.lineWidth = 2;
-                                    ctx.strokeRect(bbox.x0, bbox.y0, bbox.x1 - bbox.x0, bbox.y1 - bbox.y0);
-
-                                    // Display the corrected word above the bounding box
-                                    ctx.fillText(correctedWord, bbox.x0, bbox.y0 - 20);
-                                }
-                            }
-                        }
+                        // Highlight on canvas
+                        const bbox = word.bbox;
+                        ctx.fillText(correctedWord, bbox.x0, bbox.y0 - 20);
+                        ctx.strokeStyle = "red";
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(bbox.x0, bbox.y0, bbox.x1 - bbox.x0, bbox.y1 - bbox.y0);
                     }
                 });
 
-                // Display the corrected text in the text element
-                extractedTextElement.textContent = correctedText;
+                // After spell-checking, send corrected text for grammar check
+                checkGrammar(correctedText);
             }
         })
         .catch((error) => {
@@ -64,4 +77,40 @@ function extractAndSpellCheckText() {
     } else {
         extractedTextElement.textContent = "Please upload an image first.";
     }
+}
+
+// Function to check grammar using LanguageTool API
+function checkGrammar(text) {
+    fetch("https://api.languagetoolplus.com/v2/check", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": `Bearer ${LANGUAGE_TOOL_API_KEY}`
+        },
+        body: new URLSearchParams({
+            text: text,
+            language: "en-US"
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const ctx = document.getElementById("imageCanvas").getContext("2d");
+
+        // Loop through grammar matches and highlight each
+        data.matches.forEach(match => {
+            const errorText = text.substring(match.offset, match.offset + match.length);
+            const correction = match.replacements[0]?.value || errorText;
+
+            // Overlay the correction on canvas (positioning is estimated here)
+            ctx.fillStyle = "blue";
+            ctx.fillText(correction, 10, 10); // Positioning will need actual bounding box info for accuracy
+
+            // Display grammar issue details in the text container
+            const extractedTextElement = document.getElementById("extractedText");
+            extractedTextElement.innerHTML += `<br>Grammar issue: ${errorText} → ${correction}`;
+        });
+    })
+    .catch((error) => {
+        console.error("Error with LanguageTool API:", error);
+    });
 }
