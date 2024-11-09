@@ -1,31 +1,3 @@
-// Initialize Typo.js dictionary for spell-checking
-let dictionary;
-fetch('en_US.dic').then((response) => response.text()).then((dicData) => {
-    fetch('en_US.aff').then((response) => response.text()).then((affData) => {
-        dictionary = new Typo("en_US", affData, dicData, { platform: "any" });
-    });
-});
-
-function displayImage() {
-    const imageInput = document.getElementById("imageInput");
-    const imageCanvas = document.getElementById("imageCanvas");
-    const ctx = imageCanvas.getContext("2d");
-
-    if (imageInput.files && imageInput.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            const img = new Image();
-            img.onload = function () {
-                imageCanvas.width = img.width;
-                imageCanvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(imageInput.files[0]);
-    }
-}
-
 function extractAndSpellCheckText() {
     const imageCanvas = document.getElementById("imageCanvas");
     const extractedTextElement = document.getElementById("extractedText");
@@ -45,23 +17,23 @@ function extractAndSpellCheckText() {
 
                 let correctedText = text;
 
-                // Split text into words and punctuation tokens
+                // Split text into words and punctuation, e.g., ["Hello", ",", "world", "!"]
                 const tokens = text.match(/\b\w+\b|[.,!?;:]/g);
 
-                // Loop through each token
+                // Correct each word without affecting punctuation
                 tokens.forEach((token) => {
-                    // Only check spelling for words (ignore punctuation)
+                    // Check only word tokens for spelling errors
                     if (/\b\w+\b/.test(token)) {
                         const isCorrect = dictionary.check(token);
-                        
+
                         if (!isCorrect) {
                             const suggestions = dictionary.suggest(token);
                             const correctedWord = suggestions[0] || token;
 
-                            // Replace the word in the correctedText with the corrected version
+                            // Replace word in correctedText while preserving punctuation
                             correctedText = correctedText.replace(token, correctedWord);
 
-                            // Locate and highlight the word on canvas
+                            // Find the word on canvas and display correction
                             const wordData = words.find((word) => word.text === token);
                             if (wordData) {
                                 const bbox = wordData.bbox;
@@ -74,7 +46,7 @@ function extractAndSpellCheckText() {
                     }
                 });
 
-                // Display corrected text
+                // Display the fully corrected text
                 extractedTextElement.textContent = correctedText;
             }
         })
