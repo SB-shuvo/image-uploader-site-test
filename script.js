@@ -1,31 +1,3 @@
-// Initialize Typo.js dictionary for spell-checking
-let dictionary;
-fetch('en_US.dic').then((response) => response.text()).then((dicData) => {
-    fetch('en_US.aff').then((response) => response.text()).then((affData) => {
-        dictionary = new Typo("en_US", affData, dicData, { platform: "any" });
-    });
-});
-
-function displayImage() {
-    const imageInput = document.getElementById("imageInput");
-    const imageCanvas = document.getElementById("imageCanvas");
-    const ctx = imageCanvas.getContext("2d");
-
-    if (imageInput.files && imageInput.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            const img = new Image();
-            img.onload = function () {
-                imageCanvas.width = img.width;
-                imageCanvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(imageInput.files[0]);
-    }
-}
-
 function extractAndSpellCheckText() {
     const imageCanvas = document.getElementById("imageCanvas");
     const extractedTextElement = document.getElementById("extractedText");
@@ -33,7 +5,10 @@ function extractAndSpellCheckText() {
     if (imageCanvas) {
         extractedTextElement.textContent = "Extracting text and checking spelling. Please wait...";
 
-        Tesseract.recognize(imageCanvas, 'eng', { logger: (m) => console.log(m) })
+        // Use Tesseract.js to recognize text from the canvas
+        Tesseract.recognize(imageCanvas, 'eng', {
+            logger: (m) => console.log(m)
+        })
         .then(({ data: { text, words } }) => {
             extractedTextElement.textContent = text || "No text found in the image.";
 
@@ -48,7 +23,7 @@ function extractAndSpellCheckText() {
                 // Split text into words and punctuation, e.g., ["Hello", ",", "world", "!"]
                 const tokens = text.match(/\b\w+\b|[.,!?;:]/g);
 
-                // Correct each word without affecting punctuation
+                // Loop through each token and spell-check
                 tokens.forEach((token) => {
                     // Check only word tokens for spelling errors
                     if (/\b\w+\b/.test(token)) {
@@ -61,20 +36,25 @@ function extractAndSpellCheckText() {
                             // Replace word in correctedText while preserving punctuation
                             correctedText = correctedText.replace(token, correctedWord);
 
-                            // Find the word on canvas and display correction
+                            // Find the word's bounding box in Tesseract's data
                             const wordData = words.find((word) => word.text === token);
                             if (wordData) {
                                 const bbox = wordData.bbox;
-                                ctx.fillText(correctedWord, bbox.x0, bbox.y0 - 20); // Display corrected word
-                                ctx.strokeStyle = "red";
-                                ctx.lineWidth = 2;
-                                ctx.strokeRect(bbox.x0, bbox.y0, bbox.x1 - bbox.x0, bbox.y1 - bbox.y0); // Highlight incorrect word
+                                if (bbox) {
+                                    // Draw the bounding box around the incorrect word
+                                    ctx.strokeStyle = "red";
+                                    ctx.lineWidth = 2;
+                                    ctx.strokeRect(bbox.x0, bbox.y0, bbox.x1 - bbox.x0, bbox.y1 - bbox.y0);
+
+                                    // Display the corrected word above the bounding box
+                                    ctx.fillText(correctedWord, bbox.x0, bbox.y0 - 20);
+                                }
                             }
                         }
                     }
                 });
 
-                // Display the fully corrected text
+                // Display the corrected text in the text element
                 extractedTextElement.textContent = correctedText;
             }
         })
