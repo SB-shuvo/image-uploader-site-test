@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Upload and Text Extraction</title>
+    <title>Image Upload, Text Extraction, and Spell Check</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Upload an Image to Extract Text</h1>
+    <h1>Upload an Image for Text Extraction and Spell Check</h1>
     <form id="uploadForm">
         <input type="file" id="imageInput" accept="image/*" required>
         <button type="button" onclick="displayImage()">Upload Image</button>
-        <button type="button" onclick="extractText()">Extract Text</button>
+        <button type="button" onclick="extractAndCheckText()">Extract & Spell Check</button>
     </form>
     <div id="imageContainer">
-        <img id="displayedImage" alt="Uploaded Image" style="display:none;">
+        <canvas id="imageCanvas"></canvas>
     </div>
     <div id="textContainer">
         <h2>Extracted Text:</h2>
@@ -23,6 +23,8 @@
 
     <!-- Include Tesseract.js -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1/dist/tesseract.min.js"></script>
+    <!-- Include Typo.js -->
+    <script src="typo.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
