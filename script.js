@@ -1,3 +1,31 @@
+// Initialize Typo.js dictionary for spell-checking
+let dictionary;
+fetch('en_US.dic').then((response) => response.text()).then((dicData) => {
+    fetch('en_US.aff').then((response) => response.text()).then((affData) => {
+        dictionary = new Typo("en_US", affData, dicData, { platform: "any" });
+    });
+});
+
+function displayImage() {
+    const imageInput = document.getElementById("imageInput");
+    const imageCanvas = document.getElementById("imageCanvas");
+    const ctx = imageCanvas.getContext("2d");
+
+    if (imageInput.files && imageInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const img = new Image();
+            img.onload = function () {
+                imageCanvas.width = img.width;
+                imageCanvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(imageInput.files[0]);
+    }
+}
+
 function extractAndSpellCheckText() {
     const imageCanvas = document.getElementById("imageCanvas");
     const extractedTextElement = document.getElementById("extractedText");
