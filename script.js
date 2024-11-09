@@ -68,7 +68,7 @@ function extractAndCheckText() {
                 });
 
                 // After spell-checking, send corrected text for grammar check
-                checkGrammar(correctedText);
+                //checkGrammar(correctedText);
             }
         })
         .catch((error) => {
@@ -80,6 +80,7 @@ function extractAndCheckText() {
 }
 
 // Function to check grammar using LanguageTool API
+/*
 function checkGrammar(text) {
     fetch("https://api.languagetoolplus.com/v2/check", {
         method: "POST",
@@ -113,4 +114,4 @@ function checkGrammar(text) {
     .catch((error) => {
         console.error("Error with LanguageTool API:", error);
     });
-}
+} */
