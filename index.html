@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upload and Display</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Upload an Image</h1>
+    <form id="uploadForm">
+        <input type="file" id="imageInput" accept="image/*" required>
+        <button type="button" onclick="displayImage()">Upload</button>
+    </form>
+    <div id="imageContainer">
+        <img id="displayedImage" alt="Uploaded Image" style="display:none;">
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
