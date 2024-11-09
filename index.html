@@ -3,18 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Text Extraction & Spell Check</title>
+    <title>Image Upload, Text Extraction, and Spell Check</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Upload an Image to Extract and Check Spelling</h1>
-    <input type="file" id="imageInput" onchange="displayImage()">
-    <button onclick="extractAndSpellCheckText()">Extract and Spell Check</button>
+    <h1>Upload an Image for Text Extraction and Spell Check</h1>
+    <form id="uploadForm">
+        <input type="file" id="imageInput" accept="image/*" required>
+        <button type="button" onclick="displayImage()">Upload Image</button>
+        <button type="button" onclick="extractAndCheckText()">Extract & Spell Check</button>
+    </form>
+    <div id="imageContainer">
+        <canvas id="imageCanvas"></canvas>
+    </div>
+    <div id="textContainer">
+        <h2>Extracted Text:</h2>
+        <p id="extractedText"></p>
+    </div>
 
-    <canvas id="imageCanvas"></canvas>
-    <div id="extractedText"></div>
-
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.0.0/dist/tesseract.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/typo-js@1.0.0/dist/typo.js"></script>
+    <!-- Include Tesseract.js -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1/dist/tesseract.min.js"></script>
+    <!-- Include Typo.js -->
+    <script src="typo.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
